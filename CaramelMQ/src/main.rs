@@ -10,6 +10,8 @@ mod application;
 mod domain;
 mod infrastructure;
 
+mod test;
+
 struct PrintListener;
 
 impl Listener<String> for PrintListener {
@@ -20,7 +22,7 @@ impl Listener<String> for PrintListener {
 
 #[tokio::main]
 async fn main() {
-    const BUFFER_SIZE: usize = 10000;
+    const BUFFER_SIZE: usize = 100;
 
     let (event_service, receiver) = EventService::<String>::new(BUFFER_SIZE);
     let event_service = Arc::new(event_service);
