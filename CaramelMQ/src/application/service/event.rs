@@ -1,10 +1,9 @@
 use std::{
     collections::HashMap,
-    sync::{
-        mpsc::{self, Receiver},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
 };
+
+use tokio::sync::mpsc::{self, Receiver, Sender};
 
 use crate::domain::{
     entity::{
@@ -15,8 +14,8 @@ use crate::domain::{
 };
 
 impl<T: Clone + Send + 'static> EventService<T> {
-    pub fn new() -> (Self, Receiver<Event<T>>) {
-        let (sender, receiver) = mpsc::channel::<Event<T>>();
+    pub fn new(buffer_size: usize) -> (Self, Receiver<Event<T>>) {
+        let (sender, receiver) = mpsc::channel(buffer_size);
         let listener = Arc::new(Mutex::new(HashMap::<
             u64,
             Vec<Box<dyn listener::Listener<T> + Send>>,
@@ -25,16 +24,17 @@ impl<T: Clone + Send + 'static> EventService<T> {
         (
             Self {
                 listeners: listener,
-                senders: sender,
+                sender,
             },
             receiver,
         )
     }
 
-    pub fn publish(&self, event: Event<T>) {
-        self.senders
+    pub async fn publish(&self, event: Event<T>) {
+        self.sender
             .send(event)
-            .expect("Failed to publish event ${event}");
+            .await
+            .expect("Failed to publish event");
     }
 
     pub fn listen(&self, event_id: u64, listener: Box<dyn Listener<T> + Send>) {

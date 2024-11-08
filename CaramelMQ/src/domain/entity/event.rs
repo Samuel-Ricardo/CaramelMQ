@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Event<T> {
     pub id: u64,
     pub payload: T,
