@@ -14,7 +14,7 @@ use crate::domain::{
     service::service::EventService,
 };
 
-impl<T: Send + 'static> EventService<T> {
+impl<T: Clone + Send + 'static> EventService<T> {
     pub fn new() -> (Self, Receiver<Event<T>>) {
         let (sender, receiver) = mpsc::channel::<Event<T>>();
         let listener = Arc::new(Mutex::new(HashMap::<

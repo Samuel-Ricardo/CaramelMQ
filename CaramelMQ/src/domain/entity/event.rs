@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Event<T> {
     pub id: u64,
     pub payload: T,
@@ -5,7 +6,7 @@ pub struct Event<T> {
     pub topic: String,
 }
 
-impl<T> Event<T> {
+impl<T: Clone> Event<T> {
     pub fn new(id: u64, payload: T, timestamp: i64, topic: String) -> Self {
         Event {
             id,
