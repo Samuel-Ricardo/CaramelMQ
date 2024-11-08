@@ -3,9 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-pub struct Queue<T> {
-    queue: Arc<Mutex<VecDeque<T>>>,
-}
+use crate::domain::entity::queue::Queue;
 
 impl<T> Queue<T> {
     pub fn new() -> Self {

@@ -4,5 +4,5 @@ use std::{
 };
 
 pub struct Queue<T> {
-    queue: Arc<Mutex<VecDeque<T>>>,
+    pub(crate) queue: Arc<Mutex<VecDeque<T>>>,
 }
