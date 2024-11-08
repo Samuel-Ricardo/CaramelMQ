@@ -15,4 +15,13 @@ mod test {
 
         assert_eq!(queue.queue.lock().unwrap().len(), 1);
     }
+
+    #[test]
+    fn can_dequeue() {
+        let queue = Queue::<String>::new();
+        queue.enqueue("Hello, Rust with Tokio!".to_string());
+
+        assert_eq!(queue.dequeue(), Some("Hello, Rust with Tokio!".to_string()));
+        assert_eq!(queue.queue.lock().unwrap().len(), 0);
+    }
 }
