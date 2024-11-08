@@ -27,4 +27,10 @@ impl<T: Send + 'static> EventService<T> {
             receiver,
         )
     }
+
+    pub fn publish(&self, event: Event<T>) {
+        self.senders
+            .send(event)
+            .expect("Failed to publish event ${event}");
+    }
 }
