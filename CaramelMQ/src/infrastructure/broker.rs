@@ -4,11 +4,18 @@ use std::{
 };
 
 use crate::domain::{
-    entity::{broker::MessageBroker, event::Event, queue::Queue},
+    entity::{
+        broker::MessageBroker,
+        event::Event,
+        listener,
+        queue::{self, Queue},
+    },
     service::service::EventService,
 };
 
-impl<T: Clone + Send + Sync + 'static> MessageBroker<T> {
+use tokio::sync::mpsc::Receiver;
+
+impl<T: Clone + Send + Sync + 'static + std::fmt::Debug> MessageBroker<T> {
     pub fn new(event_service: Arc<EventService<T>>) -> Self {
         Self {
             event_service,
@@ -16,25 +23,38 @@ impl<T: Clone + Send + Sync + 'static> MessageBroker<T> {
         }
     }
 
-    pub fn start(&self) {
+    pub async fn start(&self, mut receiver: Receiver<Event<T>>) {
         let queue = self.queue.clone();
         let service = self.event_service.clone();
 
-        spawn(move || loop {
-            if let Some(event) = queue.dequeue() {
-                let listeners = service.listeners.lock().unwrap();
+        tokio::spawn(async move {
+            print!("Starting message broker...");
+            loop {
+                if let Some(event) = receiver.recv().await {
+                    let listeners = service.listeners.lock().expect("Failed to lock listeners");
 
-                if let Some(listener_group) = listeners.get(&event.id) {
-                    for listener in listener_group {
-                        listener.on_event(&event);
+                    if let Some(listener_group) = listeners.get(&event.id) {
+                        for listener in listener_group {
+                            listener.on_event(&event);
+                        }
+                    }
+                } else {
+                    if let Some(event) = queue.dequeue() {
+                        service.publish(event).await;
                     }
                 }
+
+                if 1 < 0 {
+                    break;
+                }
             }
-            sleep(std::time::Duration::from_millis(10)); // Tunable to optimize performance
+            println!("Message broker stopped");
         });
     }
 
-    pub fn enqueue(&self, event: Event<T>) {
+    pub async fn enqueue(&self, event: Event<T>) {
+        let event2 = event.clone();
         self.queue.enqueue(event);
+        self.event_service.publish(event2).await;
     }
 }

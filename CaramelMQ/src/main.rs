@@ -1,4 +1,4 @@
-use std::sync::{mpsc::Receiver, Arc};
+use std::sync::Arc;
 
 use chrono::Utc;
 use domain::{
@@ -10,38 +10,43 @@ mod application;
 mod domain;
 mod infrastructure;
 
+mod test;
+
 struct PrintListener;
 
 impl Listener<String> for PrintListener {
     fn on_event(&self, event: &Event<String>) {
-        println!("Received event with ID {}: {}", event.id, event.payload);
+        println!("Received event: {:?}", event);
     }
 }
 
-fn main() {
-    let (event_service, receiver) = EventService::<String>::new();
+#[tokio::main]
+async fn main() {
+    const BUFFER_SIZE: usize = 100;
+
+    let (event_service, receiver) = EventService::<String>::new(BUFFER_SIZE);
     let event_service = Arc::new(event_service);
     let broker = MessageBroker::new(event_service.clone());
 
     event_service.listen(1, Box::new(PrintListener));
 
-    broker.start();
+    broker.start(receiver).await;
 
     for i in 0..100 {
-        let event = Event::<String>::new(
+        let event = Event::new(
             1,
-            "Hello, World! ".to_string() + &i.to_string(),
+            "Hello, Rust with Tokio! ".to_string() + &i.to_string(),
             Utc::now().timestamp_millis(),
             "topic".to_string(),
         );
-
-        broker.enqueue(event.clone());
+        broker.enqueue(event).await;
     }
 
-    for received_event in receiver.iter() {
-        println!(
-            "Processing event with ID {}: {}",
-            received_event.id, received_event.payload
-        );
-    }
+    tokio::spawn(async {
+        loop {
+            tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        }
+    })
+    .await
+    .unwrap();
 }
