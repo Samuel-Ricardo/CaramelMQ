@@ -2,7 +2,7 @@
 mod test {
     use chrono::Utc;
 
-    use crate::{application::service::event, domain::entity::event::Event};
+    use crate::domain::entity::event::Event;
 
     #[test]
     fn can_craete_a_event() {

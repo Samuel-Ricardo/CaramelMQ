@@ -34,7 +34,7 @@ impl<T: Clone + Send + 'static> EventService<T> {
         self.sender
             .send(event)
             .await
-            .expect("Failed to publish event ${event}");
+            .expect("Failed to publish event");
     }
 
     pub fn listen(&self, event_id: u64, listener: Box<dyn Listener<T> + Send>) {
