@@ -7,7 +7,10 @@ use std::{
 };
 
 use crate::domain::{
-    entity::{event::Event, listener},
+    entity::{
+        event::Event,
+        listener::{self, Listener},
+    },
     service::service::EventService,
 };
 
@@ -32,5 +35,10 @@ impl<T: Send + 'static> EventService<T> {
         self.senders
             .send(event)
             .expect("Failed to publish event ${event}");
+    }
+
+    pub fn listen(&self, event_id: u64, listener: Box<dyn Listener<T> + Send>) {
+        let mut listeners = self.listeners.lock().unwrap();
+        listeners.entry(event_id).or_insert(vec![]).push(listener);
     }
 }
