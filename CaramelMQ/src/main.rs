@@ -30,8 +30,6 @@ async fn main() {
 
     broker.start(receiver).await;
 
-    println!("Started message broker2...");
-
     for i in 0..100 {
         let event = Event::new(
             1,
